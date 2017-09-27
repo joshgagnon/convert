@@ -2,16 +2,17 @@ from __future__ import print_function
 import signal
 import subprocess
 import logging
-from flask import Flask, request, send_file
-from flask import jsonify
+from flask import Flask, request, send_file, jsonify
 import os
 import os.path
 from io import BytesIO
 import tempfile
-from subprocess import Popen, STDOUT
+from subprocess import Popen, STDOUT, PIPE
 import shutil
 import errno
-from render import render_odt
+from data_to_png import string_to_png
+import json
+
 
 try:
     from subprocess import DEVNULL  # py3k
@@ -47,42 +48,17 @@ EXTENSIONS = {
 }
 
 
-
-def convert_type(data, type):
-    env_path = tempfile.mkdtemp()
-
-    try:
-        with tempfile.NamedTemporaryFile(suffix='.odt') as temp_in:
-            temp_in.write(data)
-            temp_in.flush()
-            args = [SOFFICE_BIN, "-env:UserInstallation=file://%s" % env_path, "--headless",
-                 "--invisible", "--convert-to", type,  "--outdir", env_path, temp_in.name]
-            Popen(args,
-                 stdout=DEVNULL,
-                 stderr=STDOUT,
-                 env={}).wait()
-            with open(temp_out.name) as temp_out:
-                return temp_out.read()
-    except Exception as e:
-        raise e
-    finally:
-        try:
-            shutil.rmtree(env_path)  # delete directory
-        except OSError as exc:
-            if exc.errno != errno.ENOENT:  # ENOENT - no such file or directory
-                raise  # re-raise exception
-
 def convert_type_service(data, type):
     try:
         with tempfile.NamedTemporaryFile(suffix='.odt') as temp_in, tempfile.NamedTemporaryFile(suffix=EXTENSIONS[type]) as temp_out:
             temp_in.write(data)
             temp_in.flush()
             args = [SOFFICE_PYTHON, CONVERTER, temp_in.name, temp_out.name]
-            print(' '.join(args))
-            Popen(args,
+            result = Popen(args,
                  stdout=DEVNULL,
-                 stderr=STDOUT,
+                 stderr=DEVNULL,
                  env={}).wait()
+
             return temp_out.read()
     except Exception as e:
         raise e
@@ -119,9 +95,22 @@ def convert():
                          as_attachment=True,
                          mimetype=MIMETYPES[file_type])
     except Exception as e:
-
         raise InvalidUsage(e.message, status_code=500)
 
+
+@app.route('/encode', methods=['POST'])
+def encode():
+    try:
+        string = json.dumps(request.get_json())
+        output = BytesIO()
+        string_to_png(string, output)
+        output.seek(0)
+        return send_file(output,
+                         attachment_filename='encoded.png',
+                         as_attachment=True,
+                         mimetype='image/png')
+    except Exception as e:
+        raise InvalidUsage(e.message, status_code=500)
 
 @app.route('/status', methods=['GET'])
 def status():

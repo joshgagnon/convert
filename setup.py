@@ -8,6 +8,7 @@ setup(name='convert',
       license='MIT',
       install_requires=[
           'flask',
-          'inflect'
+          'inflect',
+          'pypng'
       ],
       zip_safe=False)

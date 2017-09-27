@@ -42,7 +42,7 @@ IMPORT_FILTER_MAP = {
 
 EXPORT_FILTER_MAP = {
     "pdf": {
-        FAMILY_TEXT: { "FilterName": "writer_pdf_Export" },
+        FAMILY_TEXT: { "FilterName": "writer_pdf_Export" , "FilterData": { 'UseLosslessCompression': True, "ReduceImageResolution": False}},
         FAMILY_WEB: { "FilterName": "writer_web_pdf_Export" },
         FAMILY_SPREADSHEET: { "FilterName": "calc_pdf_Export" },
         FAMILY_PRESENTATION: { "FilterName": "impress_pdf_Export" },
@@ -148,11 +148,11 @@ class DocumentConverter:
             loadProperties.update(IMPORT_FILTER_MAP[inputExt])
 
         document = self.desktop.loadComponentFromURL(inputUrl, "_blank", 0, self._toProperties(loadProperties))
+
         try:
             document.refresh()
         except AttributeError:
             pass
-
         family = self._detectFamily(document)
         self._overridePageStyleProperties(document, family)
 
@@ -205,12 +205,15 @@ class DocumentConverter:
     def _toFileUrl(self, path):
         return uno.systemPathToFileUrl(abspath(path))
 
-    def _toProperties(self, dict):
+    def _toProperties(self, d):
         props = []
-        for key in dict:
+        for key in d:
             prop = PropertyValue()
             prop.Name = key
-            prop.Value = dict[key]
+            if isinstance(d[key], dict):
+                prop.Value = uno.Any("[]com.sun.star.beans.PropertyValue", self._toProperties(d[key]))
+            else:
+                prop.Value = d[key]
             props.append(prop)
         return tuple(props)
 
