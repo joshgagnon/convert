@@ -101,7 +101,7 @@ def convert():
 @app.route('/encode', methods=['POST'])
 def encode():
     try:
-        string = json.dumps(request.get_json())
+        string = json.dumps(request.get_json(force=True))
         output = BytesIO()
         string_to_png(string, output)
         output.seek(0)
