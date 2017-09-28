@@ -18,7 +18,7 @@ def find_images(file):
                 try:
                     uncompress([obj], leave_raw=True)
                     result = obj.stream.decode('utf-16be')
-                    yield result
+                    yield json.loads(result)
                 except Exception as e:
                     pass
 
@@ -26,4 +26,4 @@ def find_images(file):
 if __name__ == '__main__':
     results = list(find_images(sys.argv[1]))
     for r in results:
-        print(json.loads(r))
+        print(r)

@@ -1,16 +1,21 @@
 import png
 import sys
-
+from functools import reduce
 
 
 def string_to_png(string, output):
     string = string.encode('utf-16be')
-    png.from_array([string], 'L').save(output)
+    while len(string) % 3 != 0:
+        string += ' '.encode('utf-16be')
+    # make every fourth byte 0
+    string = reduce(lambda x, y: x + list(y) + [0], list(zip(*[iter(string)]*3)), [])
+    png.from_array([string], 'RGBA').save(output)
 
 def png_to_string(file):
     pixels = png.Reader(file).read_flat()[2]
-    pixels = list(map(chr, pixels))
-    return b''.join(pixels).decode('utf-16be')
+    pixels = reduce(lambda x, y: x + list(y)[:3], list(zip(*[iter(pixels)]*4)), [])
+    return bytearray(pixels).decode('utf-16be')
+
 
 if __name__ == '__main__':
     if sys.argv[1] == 'encode':
