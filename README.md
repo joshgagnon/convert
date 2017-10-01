@@ -21,6 +21,7 @@ Description=Convert uwsgi
 After=network.target
 
 [Service]
+User=convert
 ExecStart=/var/www/sign/bin/uwsgi  /var/www/convert/convert.ini
 Restart=always
 
@@ -60,3 +61,35 @@ virtualenv -p /usr/bin/python3.5 .
 source bin/activate
 pip install uwsgi
 python setup.py install
+
+
+# nginx conf
+server {
+    listen 80 http2;
+    server_name conversion.catalex.nz;
+
+
+    client_body_in_file_only clean;
+    client_body_buffer_size 32K;
+
+    client_max_body_size 300M;
+
+    sendfile on;
+    send_timeout 300s;
+
+    location / {
+            include uwsgi_params;
+            uwsgi_pass 127.0.0.1:5668;
+    }
+
+
+     gzip on;
+     gzip_disable "msie6";
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 9;
+    gzip_buffers 16 8k;
+    gzip_http_version 1.1;
+    gzip_types text/plain text/css application/json application/x-font-woff application/x-javascript text/xml application/xml application/xml+rss text/javascript application/javascript;
+
+}
