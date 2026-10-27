@@ -18,7 +18,7 @@ try:
     from subprocess import DEVNULL  # py3k
 except ImportError:
     import os
-    DEVNULL = open(os.devnull, 'wb')
+    DEVNULL = open(os.devnull, 'wb')download_name
 
 logging.basicConfig()
 
@@ -91,11 +91,12 @@ def convert():
             file = convert_type_service(file, file_type)
 
         return send_file(BytesIO(file),
-                         attachment_filename=os.path.splitext(filename)[0] + EXTENSIONS[file_type],
+                         download_name=os.path.splitext(filename)[0] + EXTENSIONS[file_type],
                          as_attachment=True,
                          mimetype=MIMETYPES[file_type])
-    except Exception as e:
-        raise InvalidUsage(e.message, status_code=500)
+    except Exception:
+        app.logger.exception("Conversion failed")
+        raise InvalidUsage("Conversion failed", status_code=500)
 
 
 @app.route('/encode', methods=['POST'])
@@ -106,11 +107,12 @@ def encode():
         string_to_png(string, output)
         output.seek(0)
         return send_file(output,
-                         attachment_filename='encoded.png',
+                         download_name='encoded.png',
                          as_attachment=True,
                          mimetype='image/png')
-    except Exception as e:
-        raise InvalidUsage(e.message, status_code=500)
+    except Exception:
+        app.logger.exception("Conversion failed")
+        raise InvalidUsage("Conversion failed", status_code=500)
 
 @app.route('/status', methods=['GET'])
 def status():
