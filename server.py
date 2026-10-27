@@ -116,7 +116,7 @@ def encode():
 
 @app.route('/status', methods=['GET'])
 def status():
-    return send_file('static/status.html')
+    return jsonify(status='ok')
 
 
 @app.errorhandler(InvalidUsage)
