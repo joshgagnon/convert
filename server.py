@@ -128,7 +128,7 @@ def handle_invalid_usage(error):
 
 if __name__ == '__main__':
     # dev mode
-    SOFFICE_PYTHON = '/Applications/LibreOffice.app/Contents/MacOS/python'
-    SOFFICE_BIN = '/Applications/LibreOffice.app/Contents/MacOS/soffice'
+    #SOFFICE_PYTHON = '/Applications/LibreOffice.app/Contents/MacOS/python'
+    #SOFFICE_BIN = '/Applications/LibreOffice.app/Contents/MacOS/soffice'
     print('Running on %d' % PORT)
     app.run(port=PORT, debug=True)
