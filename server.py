@@ -48,20 +48,48 @@ EXTENSIONS = {
 }
 
 
-def convert_type_service(data, type):
-    try:
-        with tempfile.NamedTemporaryFile(suffix='.odt') as temp_in, tempfile.NamedTemporaryFile(suffix=EXTENSIONS[type]) as temp_out:
-            temp_in.write(data)
-            temp_in.flush()
-            args = [SOFFICE_PYTHON, CONVERTER, temp_in.name, temp_out.name]
-            result = Popen(args,
-                 stdout=DEVNULL,
-                 stderr=DEVNULL,
-                 env={}).wait()
+def convert_type_service(data, file_type):
+    with tempfile.TemporaryDirectory(prefix="convert-") as temp_dir:
+        input_path = os.path.join(temp_dir, "input.odt")
+        output_path = os.path.join(
+            temp_dir, "output" + EXTENSIONS[file_type]
+        )
 
-            return temp_out.read()
-    except Exception as e:
-        raise e
+        with open(input_path, "wb") as f:
+            f.write(data)
+
+        args = [
+            SOFFICE_PYTHON,
+            os.path.join(os.path.dirname(__file__), CONVERTER),
+            input_path,
+            output_path
+        ]
+
+        result = subprocess.run(
+            args,
+            capture_output=True,
+            text=True,
+            timeout=120
+        )
+
+        if result.returncode != 0:
+            app.logger.error(
+                "Conversion failed (exit %d): %s",
+                result.returncode,
+                result.stderr[:4000]
+            )
+            raise RuntimeError("Document conversion failed")
+
+        if not os.path.isfile(output_path):
+            raise RuntimeError(
+                "Conversion completed but output file was not created"
+            )
+
+        if os.path.getsize(output_path) == 0:
+            raise RuntimeError("Conversion produced an empty file")
+
+        with open(output_path, "rb") as f:
+            return f.read()
 
 
 class InvalidUsage(Exception):
