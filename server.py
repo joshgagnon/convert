@@ -18,13 +18,13 @@ try:
     from subprocess import DEVNULL  # py3k
 except ImportError:
     import os
-    DEVNULL = open(os.devnull, 'wb')download_name
+    DEVNULL = open(os.devnull, 'wb')
 
 logging.basicConfig()
 
 PORT = 5668
 SOFFICE_BIN = 'soffice'
-SOFFICE_PYTHON = 'python3'
+SOFFICE_PYTHON = '/usr/bin/python3'
 CONVERTER = 'DocumentConverter.py'
 
 
